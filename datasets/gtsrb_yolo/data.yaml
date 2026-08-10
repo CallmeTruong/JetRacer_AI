@@ -1,0 +1,9 @@
+names:
+- stop
+- turn_right
+- turn_left
+- traffic_light
+nc: 4
+path: ../../datasets/gtsrb_yolo
+train: images/train
+val: images/val
