@@ -1,3 +1,4 @@
+import math
 import time
 
 class KalmanFilter1D:
@@ -104,4 +105,56 @@ class PIDController:
         # 4. PID Output calculation
         steering = kp * error + ki * self.integral + kd * derivative + bias
         return max(-1.0, min(1.0, steering))
+
+
+class StanleyController:
+    """
+    Stanley Steering Controller using Kalman-filtered CTE (Cross-Track Error)
+    and Kalman estimated lateral velocity for heading error estimation.
+    
+    Formula:
+        delta = heading_error + arctan(k * CTE / (speed + epsilon)) + bias
+    """
+    def __init__(self, q_process=0.01, r_measure=0.1):
+        self.kf = KalmanFilter1D(q_process=q_process, r_measure=r_measure)
+        self.reset()
+
+    def reset(self):
+        self.last_time = time.time()
+        self.kf.reset()
+
+    @property
+    def smoothed_x(self):
+        return self.kf.x
+
+    def update(self, raw_x, k=1.2, base_throttle=0.20, brake_gain=0.10, bias=0.0, alpha=0.7):
+        now = time.time()
+        dt = now - self.last_time
+        if dt <= 0.0 or dt > 0.5:
+            dt = 0.05
+        self.last_time = now
+
+        # Update measurement noise R from alpha slider
+        if alpha is not None and alpha > 0:
+            self.kf.r_measure = max(0.001, (1.0 - alpha) * 0.2)
+
+        # 1. Kalman Filter update -> optimal position x (CTE) and velocity v (lateral drift rate)
+        cte, vx = self.kf.update(raw_x, dt)
+
+        # 2. Heading Error Estimate (psi): heading angle in radians from lateral drift rate
+        heading_error = math.atan2(vx, 1.0)
+
+        # 3. Stanley Steering Angle Formula
+        speed = max(0.05, base_throttle)
+        cte_correction = math.atan2(k * cte, speed + 0.05)
+        
+        steering = heading_error + cte_correction + bias
+        steering = max(-1.0, min(1.0, steering))
+
+        # 4. Adaptive Throttle
+        dyn_throttle = base_throttle - brake_gain * abs(steering)
+        dyn_throttle = max(0.05, min(0.5, dyn_throttle))
+
+        return steering, dyn_throttle
+
 
