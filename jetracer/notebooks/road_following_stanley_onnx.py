@@ -30,6 +30,8 @@ def parse_args():
     parser.add_argument("--brake-gain", type=float, default=0.10, help="Brake gain on sharp turns (default: 0.10)")
     parser.add_argument("--bias", type=float, default=0.0, help="Steering bias offset (default: 0.0)")
     parser.add_argument("--alpha", type=float, default=0.7, help="Kalman filter alpha (default: 0.7)")
+    parser.add_argument("--config", type=str, default=str(notebooks_dir / "best_pid_config.json"),
+                        help="Path to JSON config file if available")
     parser.add_argument("--camera", type=str, default="csi", choices=["csi", "usb"], help="Camera type: csi or usb (default: csi)")
     parser.add_argument("--camera-device", type=int, default=0, help="Camera device index / sensor ID (default: 0)")
     parser.add_argument("--fps", type=int, default=65, help="Camera capture FPS (default: 65)")
@@ -77,19 +79,22 @@ def main():
 
     print(f"[*] Loading ONNX model from: {model_path}")
     
-    # Priority: CUDA/TensorRT if available, fallback to CPU
+    # Try GPU providers first if available, fallback gracefully to CPUExecutionProvider
     available_providers = ort.get_available_providers()
-    providers = []
-    if 'TensorrtExecutionProvider' in available_providers:
-        providers.append('TensorrtExecutionProvider')
+    providers_to_try = []
     if 'CUDAExecutionProvider' in available_providers:
-        providers.append('CUDAExecutionProvider')
-    providers.append('CPUExecutionProvider')
+        providers_to_try.append('CUDAExecutionProvider')
+    providers_to_try.append('CPUExecutionProvider')
 
-    session = ort.InferenceSession(model_path, providers=providers)
+    try:
+        session = ort.InferenceSession(model_path, providers=providers_to_try)
+    except Exception as e:
+        print(f"[!] Note: Could not initialize GPU provider ({e}). Falling back to CPUExecutionProvider...")
+        session = ort.InferenceSession(model_path, providers=['CPUExecutionProvider'])
+
     input_name = session.get_inputs()[0].name
     output_name = session.get_outputs()[0].name
-    print(f"[+] Loaded ONNX Session with providers: {session.get_providers()}")
+    print(f"[+] Loaded ONNX Session with provider: {session.get_providers()}")
 
     # 2. Load Config JSON if present
     k_stanley = args.k
