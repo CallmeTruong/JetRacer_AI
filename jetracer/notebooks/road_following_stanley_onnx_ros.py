@@ -83,12 +83,17 @@ class JetRacerROSOnnxRunner:
                 print(f"[!] Warning: Could not read config file: {e}")
 
         self.first_frame_received = False
-        # Try importing cv_bridge
-        try:
-            from cv_bridge import CvBridge
-            self.bridge = CvBridge()
-        except ImportError:
-            self.bridge = None
+
+    def ros_image_to_cv2(self, msg):
+        """Pure NumPy ROS Image decoding to bypass ROS Melodic Python 3 cv_bridge C++ Boost issues."""
+        im = np.frombuffer(msg.data, dtype=np.uint8).reshape(msg.height, msg.width, -1)
+        if msg.encoding in ['rgb8', 'rgb8']:
+            im = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
+        elif msg.encoding == 'rgba8':
+            im = cv2.cvtColor(im, cv2.COLOR_RGBA2BGR)
+        elif msg.encoding == 'bgra8':
+            im = cv2.cvtColor(im, cv2.COLOR_BGRA2BGR)
+        return im
 
     def image_callback(self, msg):
         try:
@@ -96,13 +101,7 @@ class JetRacerROSOnnxRunner:
                 self.first_frame_received = True
                 print("[+] First ROS camera frame received! Autonomous driving active.\n")
 
-            if self.bridge is not None:
-                cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-            else:
-                # Direct buffer decoding fallback
-                cv_image = np.frombuffer(msg.data, dtype=np.uint8).reshape(msg.height, msg.width, -1)
-                if msg.encoding == 'rgb8':
-                    cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
+            cv_image = self.ros_image_to_cv2(msg)
 
             input_tensor = preprocess_onnx(cv_image)
             outputs = self.session.run([self.output_name], {self.input_name: input_tensor})
