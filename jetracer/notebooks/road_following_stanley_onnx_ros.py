@@ -82,6 +82,7 @@ class JetRacerROSOnnxRunner:
             except Exception as e:
                 print(f"[!] Warning: Could not read config file: {e}")
 
+        self.first_frame_received = False
         # Try importing cv_bridge
         try:
             from cv_bridge import CvBridge
@@ -91,6 +92,10 @@ class JetRacerROSOnnxRunner:
 
     def image_callback(self, msg):
         try:
+            if not self.first_frame_received:
+                self.first_frame_received = True
+                print("[+] First ROS camera frame received! Autonomous driving active.\n")
+
             if self.bridge is not None:
                 cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
             else:
@@ -168,6 +173,8 @@ def main():
 
     print("\n=======================================================")
     print("   AUTONOMOUS DRIVING STARTED (ROS Topic + ONNX)       ")
+    print("   Waiting for frames from topic: " + args.topic)
+    print("   (Ensure launch_camera.sh is running in terminal 1)   ")
     print("   Press Ctrl+C to stop the car and exit safely.       ")
     print("=======================================================\n")
 
