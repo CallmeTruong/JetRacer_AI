@@ -27,11 +27,11 @@ def parse_args():
                         help="Path to ONNX model (.onnx)")
     parser.add_argument("--topic", type=str, default="/csi_cam_0/image_raw",
                         help="ROS Image topic name (default: /csi_cam_0/image_raw)")
-    parser.add_argument("--k", type=float, default=1.2, help="Stanley gain parameter k (default: 1.2)")
-    parser.add_argument("--throttle", type=float, default=0.20, help="Base throttle speed (default: 0.20)")
+    parser.add_argument("--k", type=float, default=2.5, help="Stanley gain parameter k (default: 1.2)")
+    parser.add_argument("--throttle", type=float, default=0.6, help="Base throttle speed (default: 0.20)")
     parser.add_argument("--brake-gain", type=float, default=0.10, help="Brake gain on sharp turns (default: 0.10)")
     parser.add_argument("--bias", type=float, default=0.0, help="Steering bias offset (default: 0.0)")
-    parser.add_argument("--alpha", type=float, default=0.7, help="Kalman filter alpha (default: 0.7)")
+    parser.add_argument("--alpha", type=float, default=0.4, help="Kalman filter alpha (default: 0.7)")
     parser.add_argument("--config", type=str, default=str(notebooks_dir / "best_pid_config.json"),
                         help="Path to JSON config file if available")
     return parser.parse_args()
