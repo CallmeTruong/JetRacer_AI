@@ -19,7 +19,7 @@ parent_dir = notebooks_dir.parent
 if str(parent_dir) not in sys.path:
     sys.path.append(str(parent_dir))
 
-from utils import preprocess
+from jetracer.utils import preprocess
 from Controller import StanleyController
 
 def parse_args():

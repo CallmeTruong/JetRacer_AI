@@ -2,6 +2,9 @@
 set -e
 
 cd "$HOME"
+sudo apt-get update
+sudo apt install opencv-python -y
+
 
 echo "==== Installing JetCam ===="
 if [ ! -d "$HOME/jetcam" ]; then
@@ -9,15 +12,6 @@ if [ ! -d "$HOME/jetcam" ]; then
 fi
 
 cd "$HOME/jetcam"
-sudo python3 setup.py install
-
-
-echo "==== Installing torch2trt ===="
-if [ ! -d "$HOME/torch2trt" ]; then
-    git clone https://github.com/NVIDIA-AI-IOT/torch2trt.git
-fi
-
-cd "$HOME/torch2trt"
 sudo python3 setup.py install
 
 
@@ -29,6 +23,9 @@ fi
 cd "$HOME/jetracer"
 sudo python3 setup.py install
 
+cd "$HOME"
+echo "=== Installing Jupyter lab ==="
+sudo apt-get install -y jupyterlab
 
 echo "=== Setting Jetson Nano to 5W mode ==="
 sudo nvpmodel -m1
