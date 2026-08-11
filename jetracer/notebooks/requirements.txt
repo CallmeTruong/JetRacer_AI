@@ -1,0 +1,18 @@
+# Core dependencies for JetRacer Notebooks
+adafruit-circuitpython-servokit
+numpy
+opencv-python
+pillow
+ipywidgets
+traitlets
+jupyter
+jupyter-clickable-image-widget
+ultralytics
+
+# PyTorch & Torchvision (Note: On Jetson Nano, install PyTorch/Torchvision wheels built for JetPack)
+torch
+torchvision
+
+# NVIDIA AI-IOT Custom Libraries (Usually installed via git / setup script on Jetson):
+# jetcam: git+https://github.com/NVIDIA-AI-IOT/jetcam.git
+# torch2trt: git+https://github.com/NVIDIA-AI-IOT/torch2trt.git
