@@ -30,8 +30,9 @@ def parse_args():
     parser.add_argument("--brake-gain", type=float, default=0.10, help="Brake gain on sharp turns (default: 0.10)")
     parser.add_argument("--bias", type=float, default=0.0, help="Steering bias offset (default: 0.0)")
     parser.add_argument("--alpha", type=float, default=0.7, help="Kalman filter alpha (default: 0.7)")
-    parser.add_argument("--config", type=str, default=str(notebooks_dir / "best_pid_config.json"),
-                        help="Path to JSON config file if available")
+    parser.add_argument("--camera", type=str, default="csi", choices=["csi", "usb"], help="Camera type: csi or usb (default: csi)")
+    parser.add_argument("--camera-device", type=int, default=0, help="Camera device index / sensor ID (default: 0)")
+    parser.add_argument("--fps", type=int, default=65, help="Camera capture FPS (default: 65)")
     return parser.parse_args()
 
 def preprocess_onnx(image):
@@ -114,19 +115,38 @@ def main():
 
     # 3. Initialize JetRacer Hardware & Camera
     try:
+        import traceback
         from jetracer.nvidia_racecar import NvidiaRacecar
-        from jetcam.csi_camera import CSICamera
-
+        
         car = NvidiaRacecar()
-        camera = CSICamera(width=224, height=224, capture_fps=65)
+
+        if args.camera.lower() == 'usb':
+            from jetcam.usb_camera import USBCamera
+            camera = USBCamera(width=224, height=224, capture_device=args.camera_device)
+            print(f"[+] USB Camera (device {args.camera_device}) initialized successfully!")
+        else:
+            from jetcam.csi_camera import CSICamera
+            camera = CSICamera(width=224, height=224, capture_device=args.camera_device, capture_fps=args.fps)
+            print(f"[+] CSI Camera (sensor_id {args.camera_device}, fps {args.fps}) initialized successfully!")
+
         camera.running = True
-        print("[+] JetRacer hardware and CSI Camera initialized successfully!")
+
     except ImportError as e:
-        print(f"[!] ERROR: JetRacer hardware libraries not found ({e}).")
+        print(f"[!] ERROR: JetRacer / JetCam hardware libraries not found ({e}).")
         print("    This script must be executed on Jetson Nano with JetRacer & JetCam installed.")
         sys.exit(1)
     except Exception as e:
-        print(f"[!] ERROR initializing hardware/camera: {e}")
+        print(f"\n[!] ERROR initializing hardware/camera:")
+        import traceback
+        traceback.print_exc()
+        print("\n" + "="*60)
+        print(" TROUBLESHOOTING CAMERA ON JETSON NANO:")
+        print(" 1. Reset the CSI camera daemon by running:")
+        print("    sudo systemctl restart nvargus-daemon")
+        print(" 2. Close Jupyter Notebook kernels or any process using the camera.")
+        print(" 3. If using a USB camera instead of CSI, run with:")
+        print("    python3 road_following_stanley_onnx.py --camera usb")
+        print("="*60 + "\n")
         sys.exit(1)
 
     # 4. Initialize Stanley Controller
