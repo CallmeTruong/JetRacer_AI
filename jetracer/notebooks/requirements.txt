@@ -8,6 +8,8 @@ traitlets
 jupyter
 jupyter-clickable-image-widget
 ultralytics
+onnx
+onnxruntime
 
 # PyTorch & Torchvision (Note: On Jetson Nano, install PyTorch/Torchvision wheels built for JetPack)
 torch
