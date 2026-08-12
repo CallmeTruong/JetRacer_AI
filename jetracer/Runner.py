@@ -101,7 +101,8 @@ class JetRacerROSOnnxRunner:
             return
 
         # Non-blocking lock acquire: drop frame immediately if previous inference is still running
-        if not self._lock.acquire(blocking=False):
+        acquired = self._lock.acquire(blocking=False)
+        if not acquired:
             return
 
         try:
@@ -161,6 +162,7 @@ class JetRacerROSOnnxRunner:
             print(f"\n[!] Error in image_callback: {e}")
         finally:
             self._lock.release()
+
 
 
 
