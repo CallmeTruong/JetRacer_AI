@@ -94,7 +94,12 @@ class JetRacerROSOnnxRunner:
             im = cv2.cvtColor(im, cv2.COLOR_RGBA2BGR)
         elif msg.encoding == 'bgra8':
             im = cv2.cvtColor(im, cv2.COLOR_BGRA2BGR)
+        
+        # Standardize to 224x224 so target points and overlay map 100% accurately
+        if im.shape[0] != 224 or im.shape[1] != 224:
+            im = cv2.resize(im, (224, 224))
         return im
+
 
     def image_callback(self, msg):
         if not self.running:

@@ -28,23 +28,35 @@ class XYDataset(BaseDataset):
     
     def __getitem__(self, idx):
         ann = self.annotations[idx]
-        image = cv2.imread(ann['image_path'], cv2.IMREAD_COLOR)
-        image = PIL.Image.fromarray(image)
-        width = image.width
-        height = image.height
-        if self.transform is not None:
-            image = self.transform(image)
+        cv_img = cv2.imread(ann['image_path'], cv2.IMREAD_COLOR)
+        if cv_img is None:
+            raise FileNotFoundError(f"Could not read image: {ann['image_path']}")
         
-        x = 2.0 * (ann['x'] / width - 0.5) # -1 left, +1 right
+        # Convert BGR to RGB
+        cv_img = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
+        height, width = cv_img.shape[:2]
+        
+        x = 2.0 * (ann['x'] / width - 0.5)  # -1 left, +1 right
         y = 2.0 * (ann['y'] / height - 0.5) # -1 top, +1 bottom
         
+        # Horizontal Flip data augmentation
+        if self.random_hflip and float(np.random.random(1)) > 0.5:
+            cv_img = cv2.flip(cv_img, 1) # horizontal flip
+            x = -x
+            
+        pil_img = PIL.Image.fromarray(cv_img)
+        if self.transform is not None:
+            pil_img = self.transform(pil_img)
+            
         if torch is not None:
-            if self.random_hflip and float(np.random.random(1)) > 0.5:
-                image = torch.from_numpy(image.numpy()[..., ::-1].copy())
-                x = -x
-            return image, ann['category_index'], torch.Tensor([x, y])
+            import torchvision.transforms.functional as F
+            # Convert PIL image to Normalized PyTorch Tensor (3, H, W)
+            tensor_img = F.to_tensor(pil_img)
+            tensor_img = F.normalize(tensor_img, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            return tensor_img, ann['category_index'], torch.Tensor([x, y])
         else:
-            return image, ann['category_index'], np.array([x, y], dtype=np.float32)
+            return pil_img, ann['category_index'], np.array([x, y], dtype=np.float32)
+
     
     def _parse(self, path):
         basename = os.path.basename(path)
