@@ -24,7 +24,8 @@ class JetRacerROSOnnxRunner:
         bias=0.0,
         alpha=0.4,
         config_path=None,
-        on_frame=None
+        video_path=None,
+        video_fps=20.0
     ):
         self.session = session
         self.input_name = input_name
@@ -37,8 +38,11 @@ class JetRacerROSOnnxRunner:
         self.brake_gain = brake_gain
         self.steering_bias = bias
         self.alpha = alpha
-        self.on_frame = on_frame
         self.running = True
+
+        self.video_path = video_path
+        self.video_fps = video_fps
+        self.video_writer = None
 
         self._lock = threading.Lock()  # Non-blocking lock to drop old frames if inference is busy
 
@@ -67,6 +71,17 @@ class JetRacerROSOnnxRunner:
         if brake_gain is not None: self.brake_gain = brake_gain
         if bias is not None: self.steering_bias = bias
         if alpha is not None: self.alpha = alpha
+
+    def stop(self):
+        """Stop driving safely and release video writer if active."""
+        self.running = False
+        if self.car is not None:
+            self.car.throttle = 0.0
+            self.car.steering = 0.0
+        if self.video_writer is not None:
+            self.video_writer.release()
+            self.video_writer = None
+            print(f"\n[+] Saved recorded video to: {self.video_path}")
 
     def ros_image_to_cv2(self, msg):
         """Pure NumPy ROS Image decoding to bypass ROS Melodic Python 3 cv_bridge C++ Boost issues."""
@@ -121,13 +136,26 @@ class JetRacerROSOnnxRunner:
             sys.stdout.write(f"\r[ROS ONNX Live] Target X: {raw_x:+.3f} | Smoothed X: {self.stanley.smoothed_x:+.3f} | Steering: {steering:+.3f} | Throttle: {dyn_throttle:.3f}")
             sys.stdout.flush()
 
-            if self.on_frame is not None:
-                self.on_frame(cv_image, raw_x, raw_y, self.stanley.smoothed_x, steering, dyn_throttle)
+            # Video Recording
+            if self.video_path is not None:
+                h, w = cv_image.shape[:2]
+                if self.video_writer is None:
+                    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+                    self.video_writer = cv2.VideoWriter(self.video_path, fourcc, self.video_fps, (w, h))
+
+                annotated = cv_image.copy()
+                px = int(w * (self.stanley.smoothed_x / 2.0 + 0.5))
+                py = int(h * (raw_y / 2.0 + 0.5)) if raw_y != 0.0 else int(h * 0.5)
+                cv2.circle(annotated, (px, py), 8, (0, 255, 0), -1)
+                cv2.putText(annotated, f"Steer:{steering:+.2f} Thr:{dyn_throttle:.2f}", (10, 25),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                self.video_writer.write(annotated)
 
         except Exception as e:
             print(f"\n[!] Error in image_callback: {e}")
         finally:
             self._lock.release()
+
 
 
 
