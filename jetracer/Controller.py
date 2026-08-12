@@ -153,7 +153,8 @@ class StanleyController:
 
         # 4. Adaptive Throttle
         dyn_throttle = base_throttle - brake_gain * abs(steering)
-        dyn_throttle = max(0.05, min(0.5, dyn_throttle))
+        dyn_throttle = max(0.05, min(1.0, dyn_throttle))
+
 
         return steering, dyn_throttle
 
