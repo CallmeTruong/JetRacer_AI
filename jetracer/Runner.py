@@ -166,7 +166,152 @@ class JetRacerROSOnnxRunner:
         except Exception as e:
             print(f"\n[!] Error in image_callback: {e}")
         finally:
-            self._lock.release()
+            try:
+                self._lock.release()
+            except RuntimeError:
+                pass
+
+
+class JetRacerROSPthRunner:
+    def __init__(
+        self,
+        model,
+        device,
+        car,
+        stanley,
+        k=2.5,
+        throttle=0.6,
+        brake_gain=0.10,
+        bias=0.0,
+        alpha=0.4,
+        video_path=None,
+        video_fps=20.0,
+        on_frame=None
+    ):
+        self.model = model
+        self.device = device
+        self.car = car
+        self.stanley = stanley
+
+        self.k_stanley = k
+        self.base_throttle = throttle
+        self.brake_gain = brake_gain
+        self.steering_bias = bias
+        self.alpha = alpha
+        self.on_frame = on_frame
+        self.running = True
+
+        self.video_path = video_path
+        self.video_fps = video_fps
+        self.video_writer = None
+        self.first_frame_received = False
+
+        self._lock = threading.Lock()
+
+    def _eval_param(self, param):
+        return param() if callable(param) else param
+
+    def stop(self):
+        self.running = False
+        if self.car:
+            self.car.steering = 0.0
+            self.car.throttle = 0.0
+        if self.video_writer:
+            self.video_writer.release()
+            self.video_writer = None
+
+    def ros_image_to_cv2(self, msg):
+        im = np.frombuffer(msg.data, dtype=np.uint8).reshape(msg.height, msg.width, -1)
+        if msg.encoding in ['rgb8', 'rgb8']:
+            im = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
+        elif msg.encoding == 'rgba8':
+            im = cv2.cvtColor(im, cv2.COLOR_RGBA2BGR)
+        elif msg.encoding == 'bgra8':
+            im = cv2.cvtColor(im, cv2.COLOR_BGRA2BGR)
+        
+        if im.shape[0] != 224 or im.shape[1] != 224:
+            im = cv2.resize(im, (224, 224))
+        return im
+
+    def image_callback(self, msg):
+        if not self.running:
+            return
+
+        acquired = self._lock.acquire(blocking=False)
+        if not acquired:
+            return
+
+        try:
+            if not self.first_frame_received:
+                self.first_frame_received = True
+                print("[+] First ROS camera frame received! PyTorch Autonomous driving active.\n")
+
+            cv_image = self.ros_image_to_cv2(msg)
+
+            # PyTorch Preprocessing & Inference
+            img_rgb = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
+            img_float = img_rgb.astype(np.float32) / 255.0
+            img_chw = img_float.transpose(2, 0, 1)
+            mean = np.array([0.485, 0.456, 0.406], dtype=np.float32).reshape(3, 1, 1)
+            std = np.array([0.229, 0.224, 0.225], dtype=np.float32).reshape(3, 1, 1)
+            img_norm = (img_chw - mean) / std
+            input_tensor = np.expand_dims(img_norm, axis=0)
+
+            import torch
+            with torch.no_grad():
+                img_t = torch.from_numpy(input_tensor).to(self.device)
+                output_data = self.model(img_t).cpu().numpy().flatten()
+
+            raw_x = float(output_data[0])
+            raw_y = float(output_data[1]) if len(output_data) > 1 else 0.0
+
+            k_val = self._eval_param(self.k_stanley)
+            throttle_val = self._eval_param(self.base_throttle)
+            brake_val = self._eval_param(self.brake_gain)
+            bias_val = self._eval_param(self.steering_bias)
+            alpha_val = self._eval_param(self.alpha)
+
+            steering, dyn_throttle = self.stanley.update(
+                raw_x=raw_x,
+                k=k_val,
+                base_throttle=throttle_val,
+                brake_gain=brake_val,
+                bias=bias_val,
+                alpha=alpha_val
+            )
+
+            self.car.steering = steering
+            self.car.throttle = dyn_throttle
+
+            sys.stdout.write(f"\r[ROS PyTorch Live] Target X: {raw_x:+.3f} | Smoothed X: {self.stanley.smoothed_x:+.3f} | Steering: {steering:+.3f} | Throttle: {dyn_throttle:.3f}")
+            sys.stdout.flush()
+
+            # Video Recording
+            if self.video_path is not None:
+                h, w = cv_image.shape[:2]
+                if self.video_writer is None:
+                    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+                    self.video_writer = cv2.VideoWriter(self.video_path, fourcc, self.video_fps, (w, h))
+
+                annotated = cv_image.copy()
+                px = int(w * (self.stanley.smoothed_x / 2.0 + 0.5))
+                py = int(h * (raw_y / 2.0 + 0.5)) if raw_y != 0.0 else int(h * 0.5)
+                cv2.circle(annotated, (px, py), 8, (0, 255, 0), -1)
+                cv2.putText(annotated, f"Steer:{steering:+.2f} Thr:{dyn_throttle:.2f}", (10, 25),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                self.video_writer.write(annotated)
+
+            if self.on_frame is not None:
+                self.on_frame(cv_image, raw_x, raw_y, self.stanley.smoothed_x, steering, dyn_throttle)
+
+        except Exception as e:
+            print(f"\n[!] Error in image_callback: {e}")
+        finally:
+            try:
+                self._lock.release()
+            except RuntimeError:
+                pass
+
 
 
 
