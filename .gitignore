@@ -1,0 +1,14 @@
+# Dataset folders
+jetracer/notebooks/road_following_*
+jetracer/notebooks/road_following_A/
+jetracer/notebooks/road_following_B/
+
+# Python cache & compiled files
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Video recordings
+*.mp4
