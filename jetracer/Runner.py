@@ -25,7 +25,8 @@ class JetRacerROSOnnxRunner:
         alpha=0.4,
         config_path=None,
         video_path=None,
-        video_fps=20.0
+        video_fps=20.0,
+        on_frame=None
     ):
         self.session = session
         self.input_name = input_name
@@ -38,6 +39,7 @@ class JetRacerROSOnnxRunner:
         self.brake_gain = brake_gain
         self.steering_bias = bias
         self.alpha = alpha
+        self.on_frame = on_frame
         self.running = True
 
         self.video_path = video_path
@@ -151,10 +153,15 @@ class JetRacerROSOnnxRunner:
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
                 self.video_writer.write(annotated)
 
+            # Custom Frame Callback (e.g. In-place HTML Jupyter display)
+            if self.on_frame is not None:
+                self.on_frame(cv_image, raw_x, raw_y, self.stanley.smoothed_x, steering, dyn_throttle)
+
         except Exception as e:
             print(f"\n[!] Error in image_callback: {e}")
         finally:
             self._lock.release()
+
 
 
 
