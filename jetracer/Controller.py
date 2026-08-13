@@ -127,7 +127,7 @@ class StanleyController:
     def smoothed_x(self):
         return self.kf.x
 
-    def update(self, raw_x, k=1.2, base_throttle=0.20, brake_gain=0.10, bias=0.0, alpha=0.7):
+    def update(self, raw_x, k=1.2, base_throttle=0.20, brake_gain=0.10, bias=0.0, alpha=0.7, lidar_offset=0.0):
         now = time.time()
         dt = now - self.last_time
         if dt <= 0.0 or dt > 0.5:
@@ -138,8 +138,12 @@ class StanleyController:
         if alpha is not None and alpha > 0:
             self.kf.r_measure = max(0.001, (1.0 - alpha) * 0.2)
 
+        # Apply LiDAR evasive offset to raw_x before Kalman filtering!
+        effective_x = raw_x + (lidar_offset if lidar_offset is not None else 0.0)
+        effective_x = max(-1.0, min(1.0, effective_x))
+
         # 1. Kalman Filter update -> optimal position x (CTE) and velocity v (lateral drift rate)
-        cte, vx = self.kf.update(raw_x, dt)
+        cte, vx = self.kf.update(effective_x, dt)
 
         # 2. Heading Error Estimate (psi): heading angle in radians from lateral drift rate
         heading_error = math.atan2(vx, 1.0)
@@ -153,9 +157,9 @@ class StanleyController:
 
         # 4. Adaptive Throttle
         dyn_throttle = base_throttle - brake_gain * abs(steering)
-        dyn_throttle = max(0.05, min(0.8, dyn_throttle))
-
+        dyn_throttle = max(0.0, min(1, dyn_throttle))
 
         return steering, dyn_throttle
+
 
 
