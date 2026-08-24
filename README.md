@@ -111,7 +111,7 @@ Binary MobileNet classifier monitoring path status to trigger emergency stop and
 
 ---
 
-### 🅱️ Workflow 3: Smart City Option B Pipeline (3-Model Multi-Task & Trajectory)
+### 🅱️ Workflow 3: Smart City Option B Pipeline (3-Model Multi-Task)
 
 ```
                               ┌───────────────────────┐
@@ -260,11 +260,30 @@ jupyter lab --no-browser --ip=0.0.0.0 --port=8888
 
 ---
 
-## 🏙️ Smart City Deployment Options
+## 🏎️ Autonomous Driving Execution Modes
+
+The platform supports two core autonomous driving execution modes:
+
+---
+
+### 🛣️ Mode 1: Autonomous Lane Following
+Autonomous road and track navigation powered by ResNet-18 regression and the **Stanley Controller**.
+
+- **AI Model**: ResNet-18 Regression (`road_following_model.onnx` / `.engine`) predicting target apex coordinates `(x, y)`.
+- **Steering Control**: **Stanley Controller** calculates steering angles and adaptive speed throttle based on target point offset.
+- **Interactive Notebook**: `notebooks/1_lane_following/04_road_following_live.ipynb`
+- **Headless Execution**:
+  ```bash
+  python apps/speed_track.py
+  ```
+
+---
+
+### 🏙️ Mode 2: Smart City Urban Driving Options
 
 The platform offers **two architecture options** for smart city autonomous navigation:
 
-### 🅰️ Option A: Smart City FSM & Escape Pipeline (`smart_city_fsm.ipynb`)
+#### 🅰️ Option A: Smart City FSM & Escape Pipeline (`smart_city_fsm.ipynb`)
 *(Direct migration from `jetracer-car/notebooks/smart_city.ipynb`)*
 
 A deterministic state machine architecture with real-time obstacle evasion & traffic sign reaction.
@@ -286,7 +305,7 @@ python apps/smart_city.py
 
 ---
 
-### 🅱️ Option B: Multi-Model Multi-Task Pipeline (`smart_city_multitask.ipynb`)
+#### 🅱️ Option B: Multi-Model Multi-Task Pipeline (`smart_city_multitask.ipynb`)
 An advanced 3-model parallel inference system combining object detection, safety classification, and waypoint tracking.
 
 - **AI Models (3 Parallel Models)**:
