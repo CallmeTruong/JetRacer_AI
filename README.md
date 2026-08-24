@@ -14,7 +14,9 @@ Unified autonomous driving codebase for the **NVIDIA Jetson Nano** and **JetRace
 
 This project is built for and deployed on the **[Waveshare JetRacer ROS AI Kit](https://www.waveshare.com/wiki/JetRacer_ROS_AI_Kit)** — an official high-speed autonomous racing robot platform powered by the **NVIDIA Jetson Nano**.
 
-![Waveshare JetRacer ROS Hardware](images/jetracer_ros_hardware.jpg)
+<p align="center">
+  <img src="images/jetracer_ros_hardware.jpg" width="480" alt="Waveshare JetRacer ROS Hardware" />
+</p>
 
 ### Key Hardware & Platform Specifications:
 - **Compute Unit**: NVIDIA Jetson Nano (128-core Maxwell GPU, ARM Cortex-A57 CPU).
