@@ -380,11 +380,13 @@ python tools/label_trajectory_gui.py
 
 ## 📊 Datasets & Pretrained Models
 
-The full dataset containing **3,200+ raw and annotated images** for Lane Following and Urban Traffic is publicly hosted on Hugging Face:
+The full datasets containing **3,200+ raw and annotated images** for Lane Following and Smart City Urban Traffic are publicly hosted on:
 
 - 📦 **Hugging Face Dataset Hub**: [🤗 `truongpmn/Jetracer_ai`](https://huggingface.co/datasets/truongpmn/Jetracer_ai)
   - `lane_following/`: Apex steering vector images (`road_following_A/apex/`)
   - `urban_traffic/`: YOLO traffic sign & light detection frames and collision classification samples (`free/`, `blocked/`)
+- 💙 **Kaggle Datasets Hub**: [📘 `daf2pro/jetracer-smartcity`](https://www.kaggle.com/datasets/daf2pro/jetracer-smartcity)
+  - YOLOv8 format annotated dataset with `data.yaml` configuration for traffic sign & light detection training.
 
 
 ---
