@@ -1,7 +1,17 @@
-# Dataset folders
-jetracer/notebooks/road_following_*
-jetracer/notebooks/road_following_A/
-jetracer/notebooks/road_following_B/
+# macOS metadata
+.DS_Store
+**/.DS_Store
+
+# Cloned temporary repos
+jetracer-car/
+
+# Build & egg metadata
+*.egg-info/
+build/
+dist/
+
+# Accidental remote transfer folders
+jetson@*/
 
 # Python cache & compiled files
 **/__pycache__/
@@ -10,5 +20,16 @@ jetracer/notebooks/road_following_B/
 *.pyd
 .pytest_cache/
 
-# Video recordings
+# Heavy model binaries
+*.onnx
+*.engine
+*.pth
+*.pt
+
+# Video recordings and log files
 *.mp4
+*.avi
+*.log
+
+# Dataset folders
+datasets/
