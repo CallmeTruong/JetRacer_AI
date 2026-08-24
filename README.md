@@ -4,6 +4,28 @@ Unified autonomous driving codebase for the **NVIDIA Jetson Nano** and **JetRace
 
 ---
 
+## 🎬 Live Autonomous Driving Demo
+
+![JetRacer AI Live Autonomous Drive](images/demo_autonomous_drive.gif)
+
+---
+
+## 🏎️ Hardware Platform: Waveshare JetRacer ROS AI Kit
+
+This project is built for and deployed on the **[Waveshare JetRacer ROS AI Kit](https://www.waveshare.com/wiki/JetRacer_ROS_AI_Kit)** — an official high-speed autonomous racing robot platform powered by the **NVIDIA Jetson Nano**.
+
+![Waveshare JetRacer ROS Hardware](images/jetracer_ros_hardware.jpg)
+
+### Key Hardware & Platform Specifications:
+- **Compute Unit**: NVIDIA Jetson Nano (128-core Maxwell GPU, ARM Cortex-A57 CPU).
+- **Steering System**: Ackermann front-wheel steering architecture with high-torque servo motor.
+- **Drivetrain**: High-speed DC motor with encoder feedback for precise velocity control.
+- **Vision Sensor**: Wide-angle CSI camera module delivering high-frame-rate video input.
+- **Middleware & SDK**: ROS Melodic Morenia, PyCUDA, TensorRT FP16 acceleration, and JetRacer HAL.
+- **Official Documentation**: [Waveshare JetRacer ROS AI Kit Wiki](https://www.waveshare.com/wiki/JetRacer_ROS_AI_Kit).
+
+---
+
 ## 🌟 Visual Model Predictions & Capabilities
 
 ### 🛣️ 1. Lane Following & Steering Vector Prediction
