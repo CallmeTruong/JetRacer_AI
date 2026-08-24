@@ -32,7 +32,11 @@ parent_dir = Path(__file__).resolve().parent.parent.parent
 if str(parent_dir) not in sys.path:
     sys.path.append(str(parent_dir))
 
-from jetracer.urban.config import DETECTION_CLASSES
+try:
+    from jetracer.urban.config import DETECTION_CLASSES
+except ImportError:
+    from .config import DETECTION_CLASSES
+
 
 class BBoxLabelerGUI:
     def __init__(self, dataset_dir):
