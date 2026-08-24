@@ -1,4 +1,4 @@
-# 🏎️ JetRacer AI — Autonomous Driving Platform
+# 🏎️ JetRacer AI — Autonomous Driving
 
 Unified autonomous driving codebase for the **NVIDIA Jetson Nano** and **JetRacer** chassis. Migrated and refactored directly from `jetracer-car`. Integrates **Lane Following** (road tracking via ResNet-18 regression & Stanley controller) and an advanced **Smart City Urban Traffic System** (YOLO Object Detection, Obstacle Evasion State Machine, Conditioned Trajectory Prediction, and FSM Decision Logic).
 
@@ -374,6 +374,7 @@ python tools/label_bbox_gui.py
 # Trajectory waypoint labeling for direction model
 python tools/label_trajectory_gui.py
 ```
+**Note that you can using roboflow or any other tools to label your data (it's faster and have more features)**
 
 ---
 
