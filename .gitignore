@@ -20,11 +20,8 @@ jetson@*/
 *.pyd
 .pytest_cache/
 
-# Heavy model binaries
-*.onnx
-*.engine
-*.pth
-*.pt
+# Allow tracking models inside models directory
+!models/**
 
 # Video recordings and log files
 *.mp4
