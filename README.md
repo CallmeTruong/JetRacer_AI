@@ -1,6 +1,6 @@
 # 🏎️ JetRacer AI — Autonomous Driving System
 
-A unified, production-grade autonomous driving codebase built for the **NVIDIA Jetson Nano** and **Waveshare JetRacer** chassis. Directly migrated and enhanced from `jetracer-car` (dev branch). Integrates **Lane Following** (road tracking via ResNet-18 regression & Stanley controller) and an advanced **Smart City Urban Traffic System** (YOLO Object Detection, Obstacle Evasion State Machine, Navigation FSM, and Decision Logic).
+An end-to-end autonomous driving platform built for the **NVIDIA Jetson Nano** and **Waveshare JetRacer** chassis, combining high-speed track navigation with smart city urban driving compliant with traffic regulations.
 
 ---
 
@@ -281,8 +281,6 @@ Road navigation powered by a ResNet-18 steering regression model and the **Stanl
 The platform offers two modular architecture options for smart city navigation:
 
 #### 🅰️ Option A: FSM & Navigation Pipeline (`notebooks/2_urban_traffic/smart_city.ipynb`)
-*(Direct migration from `jetracer-car` dev branch)*
-
 A deterministic state machine system featuring real-time obstacle evasion and traffic sign reaction.
 - **AI Models**: YOLO Sign Detector (`best.onnx`) + MobileNet Road Safety Classifier (`best_model_mobilenet.onnx`).
 - **State Machines**:
