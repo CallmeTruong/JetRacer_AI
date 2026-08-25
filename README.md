@@ -284,7 +284,7 @@ The platform offers two modular architecture options for smart city navigation:
 A deterministic state machine system featuring real-time obstacle evasion and traffic sign reaction.
 - **AI Models**: YOLO Sign Detector (`best.onnx`) + MobileNet Road Safety Classifier (`best_model_mobilenet.onnx`).
 - **State Machines**:
-  - `TrafficFSM`: Filters detections spatially by bounding box area and ROI margins (`0.05..0.95`), resolving sign priorities.
+  - `TrafficFSM`: Filters detections spatially by bounding box area and ROI margins, resolving sign priorities.
   - `NavigationFSM`: Handles 2-phase obstacle evasion (`DRIVE` -> `REVERSE_TURNING` -> `PAUSE` -> `CHECK_FORWARD`), 30s STOP signal timeout, directional reversing, and max reverse cycle limits.
 - **Notebook**: `notebooks/2_urban_traffic/smart_city.ipynb`
 
@@ -300,9 +300,12 @@ A 3-model parallel inference system combining sign detection, road safety, and t
 
 Use **`notebooks/2_urban_traffic/TrafficSignModel.ipynb`** to train custom YOLOv8 object detection models:
 
-1. **Acquire Dataset**: Downloads annotated JetRacer SmartCity dataset from Kaggle (`daf2pro/jetracer-smartcity`).
-2. **Train Model**: Runs Ultralytics YOLOv8 training (`yolov8n.pt`).
-3. **Export ONNX**: Exports trained weights to ONNX format (`opset=12`) for Jetson Nano TensorRT deployment.
+> [!NOTE]
+> You can also use third-party platforms such as **[Roboflow](https://roboflow.com/)** or custom labeling tools to annotate datasets and train YOLOv8 models conveniently.
+
+1. **Acquire Dataset**: Downloads annotated JetRacer SmartCity dataset from Kaggle.
+2. **Train Model**: Runs Ultralytics YOLOv8 training.
+3. **Export ONNX**: Exports trained weights to ONNX format for Jetson Nano TensorRT deployment.
 
 ---
 
