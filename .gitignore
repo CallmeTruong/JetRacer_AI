@@ -2,16 +2,10 @@
 .DS_Store
 **/.DS_Store
 
-# Cloned temporary repos
-jetracer-car/
-
 # Build & egg metadata
 *.egg-info/
 build/
 dist/
-
-# Accidental remote transfer folders
-jetson@*/
 
 # Python cache & compiled files
 **/__pycache__/
@@ -20,9 +14,6 @@ jetson@*/
 *.pyd
 .pytest_cache/
 
-# Allow tracking models inside models directory
-!models/**
-
 # Video recordings and log files
 *.mp4
 *.avi
@@ -30,3 +21,6 @@ jetson@*/
 
 # Dataset folders
 datasets/
+
+# Cloned reference repo
+jetracer-car/

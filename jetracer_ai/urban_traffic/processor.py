@@ -102,17 +102,27 @@ class YOLOProcessor:
         return results
 
     def draw_bboxes(self, img0, detections):
+        color_map = {
+            'green-light': (0, 255, 0),            # Pure Green
+            'red-light': (0, 0, 255),              # Pure Red
+            'prohibition-sign': (0, 120, 255),     # Coral/Red-Orange (distinct from Red Light)
+            'left-turn-sign': (255, 255, 0),       # Cyan
+            'right-turn-sign': (0, 200, 255),      # Gold/Amber
+            'straight-ahead-sign': (255, 0, 255),   # Magenta
+        }
         for det in detections:
             x, y, w, h = det['box']
-            label = f"{det['class_name']} {det['confidence']:.2f}"
-            cv2.rectangle(img0, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cname = det.get('class_name', det.get('label', ''))
+            label = f"{cname} {det['confidence']:.2f}"
+            color = color_map.get(cname, (0, 255, 0))
+            cv2.rectangle(img0, (x, y), (x + w, y + h), color, 2)
             cv2.putText(
                 img0,
                 label,
                 (x, max(y - 10, 20)),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                0.6,
-                (0, 255, 0),
+                0.55,
+                color,
                 2,
             )
         return img0
