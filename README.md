@@ -345,8 +345,8 @@ JetRacer_AI/
 
 ## 👥 Collaborators & Co-Authors
 
-- **mducdaf2**: [github.com/mducdaf2](https://github.com/mducdaf2)
 - **CallmeTruong**: [github.com/CallmeTruong](https://github.com/CallmeTruong)
+- **mducdaf2**: [github.com/mducdaf2](https://github.com/mducdaf2)
 
 ---
 
