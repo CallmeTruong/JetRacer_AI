@@ -43,7 +43,7 @@ Conditioned MobileNetV2 model (`best_trajectory_mobilenet.onnx`) predicting 5 ro
 | Cmd: TURN LEFT | Cmd: STRAIGHT | Cmd: TURN RIGHT |
 | :-: | :-: | :-: |
 | ![Trajectory Left](images/trajectory_cmd_turn_left.jpg) | ![Trajectory Straight](images/trajectory_cmd_straight.jpg) | ![Trajectory Right](images/trajectory_cmd_turn_right.jpg) |
-| ![Trajectory Candidate 1](images/trajectory_candidates/test_41_19c3aeaa.jpg) | ![Trajectory Candidate 2](images/trajectory_candidates/test_3_024b7712.jpg) | ![Trajectory Candidate 3](images/trajectory_candidates/test_17_0a3c9dba.jpg) |
+| ![Trajectory Candidate 1](images/trajectory_candidates/test_3_024b7712.jpg) | ![Trajectory Candidate 2](images/trajectory_candidates/test_41_19c3aeaa.jpg) | ![Trajectory Candidate 3](images/trajectory_candidates/test_17_0a3c9dba.jpg) |
 
 ---
 
