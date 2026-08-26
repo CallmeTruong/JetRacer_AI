@@ -11,7 +11,7 @@ This repository focuses on solving **two primary autonomous driving benchmarks**
 | 🏁 1. Speed Track Challenge | 🏙️ 2. Smart City Challenge |
 | :-: | :-: |
 | ![Speed Track Challenge](images/speed_track_challenge.jpg) | ![Smart City Challenge](images/smart_city_challenge.jpg) |
-| **High-Speed Autonomous Lane Following**<br>Focused on high-speed track navigation, continuous lane boundary detection (ResNet-18 regression), and real-time Stanley steering control. | **Urban Traffic Compliance & Safety**<br>Focused on urban driving compliant with traffic laws, real-time traffic lights & signs (YOLO), intersection rules, and 2-phase obstacle evasion FSM. |
+| **High-Speed Autonomous Lane Following**<br>Focused on high-speed track navigation, continuous lane following and real-time Stanley steering control. | **Urban Traffic Compliance & Safety**<br>Focused on urban driving compliant with traffic laws, real-time traffic lights & signs (YOLO), intersection rules, and 2-phase obstacle evasion FSM. |
 
 ---
 
