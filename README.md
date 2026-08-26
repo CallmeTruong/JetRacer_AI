@@ -17,7 +17,9 @@ This repository focuses on solving **two primary autonomous driving benchmarks**
 
 ## 🎬 Live Autonomous Driving Demo
 
-![JetRacer AI Live Autonomous Drive](images/demo_autonomous_drive.gif)
+| 🛣️ Autonomous Lane Following Demo | 🏙️ Smart City Urban Driving Demo |
+| :-: | :-: |
+| ![Lane Following Live Demo](images/demo_autonomous_drive.gif) | ![Smart City Urban Driving Demo](images/demo_smart_city.gif) |
 
 ---
 
