@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
 """
-RacerController - Lp tru tng iu khin JetRacer (Ackermann Steering)
+RacerController - Abstraction layer for JetRacer (Ackermann Steering)
 
-Xe JetRacer dng Ackermann steering (li servo pha trc + motor ga pha sau),
-KHÔNG PHẢI differential drive nh JetBot.
+The JetRacer uses Ackermann steering (front servo steering + rear motor drive),
+NOT differential drive like JetBot.
 
-Khc bit chnh:
-  - JetBot:    robot.set_motors(left_speed, right_speed)  → quay ti ch c
-  - JetRacer:  car.steering = angle, car.throttle = speed → KHÔNG quay ti ch
+Key differences:
+  - JetBot:    robot.set_motors(left_speed, right_speed)  -> can spin in place
+  - JetRacer:  car.steering = angle, car.throttle = speed -> CANNOT spin in place
 
-Lp ny cung cp API thng nht  code chnh khng cn quan tm loi xe.
+This class provides a unified API so the main code doesn't need to worry about vehicle type.
 
-Cch dng:
+Usage:
     from src.core.control.racer_controller import RacerController
     controller = RacerController()
-    controller.forward(0.3)          # i thng
-    controller.steer(0.5, 0.3)       # R phi nh + i ti
-    controller.turn_angle(90)        # R phi 90  (i vng cung)
-    controller.stop()                # Dng
+    controller.forward(0.3)          # Drive straight
+    controller.steer(0.5, 0.3)       # Slight right turn + drive forward
+    controller.turn_angle(90)        # Turn right 90 degrees (arc turn)
+    controller.stop()                # Stop
 """
 
 import sys
-# (translated)
+# Remove Python 2.7 paths to avoid import conflicts
 sys.path = [p for p in sys.path if 'python2.7' not in p]
 
 import time
@@ -34,42 +34,42 @@ except ImportError:
     HAS_ROS = False
 
 # ============================================================
-# (translated)
+# Default Configuration Parameters
 # ============================================================
 DEFAULT_CONFIG = {
-    # --- Throttle (ga) ---
-    "BASE_THROTTLE": 0.20,         # Tc  i thng mc nh (0.0 → 1.0)
-    "TURN_THROTTLE": 0.15,         # Tc  khi ang r (chm hn)
-    "MAX_THROTTLE": 0.40,          # Gii hn tc  ti a (an ton)
+    # --- Throttle ---
+    "BASE_THROTTLE": 0.20,         # Default straight-line speed (0.0 -> 1.0)
+    "TURN_THROTTLE": 0.15,         # Speed while turning (slower)
+    "MAX_THROTTLE": 0.40,          # Maximum throttle limit (safety)
 
-    # (translated)
-    "STEERING_GAIN": 0.8,          # H s khuch i gc li khi bm line
-    "MAX_STEERING": 1.0,           # Gii hn gc li ti a (-1.0 tri ↔ +1.0 phi)
-    "STEERING_OFFSET": 0.0,        # B lch nu xe b lch (calibrate trn xe tht)
+    # --- Steering ---
+    "STEERING_GAIN": 0.8,          # Steering gain when following lane
+    "MAX_STEERING": 1.0,           # Maximum steering angle (-1.0 left <-> +1.0 right)
+    "STEERING_OFFSET": 0.0,        # Steering offset if vehicle drifts (calibrate on real car)
 
-    # (translated)
-    "TURN_DURATION_90_DEG": 1.5,   # Thi gian (giy)  r 90°  TURN_THROTTLE
-    "STEERING_VALUE_FOR_TURN": 0.7, # Gi tr steering khi r gp (0.0→1.0)
+    # --- Arc Turning ---
+    "TURN_DURATION_90_DEG": 1.5,   # Time (seconds) to complete a 90-degree arc turn at TURN_THROTTLE
+    "STEERING_VALUE_FOR_TURN": 0.7, # Steering value for sharp turns (0.0 -> 1.0)
 
     # --- PID Controller ---
     "PID_KP": 0.5,                 # Proportional gain
-    "PID_KI": 0.0,                 # Integral gain (thng  0 cho robot nh)
-    "PID_KD": 0.1,                 # Derivative gain (gim dao ng)
+    "PID_KI": 0.0,                 # Integral gain (typically 0 for small robots)
+    "PID_KD": 0.1,                 # Derivative gain (reduce oscillations)
 
     # --- Safety ---
-    "SAFE_ZONE_PERCENT": 0.3,      # Vng an ton  gia (% chiu rng nh)
+    "SAFE_ZONE_PERCENT": 0.3,      # Center safe zone (% of image width)
 }
 
 
 class RacerController:
     """
-    Controller cho JetRacer (Waveshare JetRacer Pro AI Kit)
+    Controller for JetRacer (Waveshare JetRacer Pro AI Kit)
     
     Hardware:
-    - Servo li (steering): PCA9685 channel, range -1.0 (tri) → +1.0 (phi)
-    - Motor ga (throttle):  PCA9685 channel, range -1.0 (li) → +1.0 (tin)
-    - RPLIDAR trn nc
-    - CSI Camera pha trc
+    - Servo steering: PCA9685 channel, range -1.0 (left) -> +1.0 (right)
+    - Motor throttle: PCA9685 channel, range -1.0 (reverse) -> +1.0 (forward)
+    - RPLIDAR on top
+    - CSI Camera at front
     """
 
     def __init__(self, config=None):
@@ -85,58 +85,58 @@ class RacerController:
         self._initialize_hardware()
 
     def _initialize_hardware(self):
-        """(see module docstring)"""
-        # (translated)
+        """Try to initialize the JetRacer hardware, falling back to JetBot or Mock."""
+        # Attempt 1: NvidiaRacecar (JetRacer)
         try:
             from jetracer.nvidia_racecar import NvidiaRacecar
             self.car = NvidiaRacecar()
             self.car.steering = 0.0
             self.car.throttle = 0.0
-            self._log("Khi to JetRacer (NvidiaRacecar) thnh cng.")
+            self._log("Initialized JetRacer (NvidiaRacecar) successfully.")
             return
         except Exception as e:
-            self._log(f"Khng tm thy jetracer library: {e}", level="warn")
+            self._log(f"jetracer library not found: {e}", level="warn")
 
-        # (translated)
+        # Attempt 2: JetBot (fallback)
         try:
             from jetbot import Robot
             self.car = Robot()
             self._mock = False
-            self._log("Khi to JetBot Pro (fallback) thnh cng.")
-            self._log("LƯU Ý: ang dng JetBot API trn JetRacer - cn kim tra tng thch!", level="warn")
+            self._log("Initialized JetBot Pro (fallback) successfully.")
+            self._log("WARNING: Using JetBot API on JetRacer - check compatibility!", level="warn")
             return
         except Exception as e:
-            self._log(f"Khng tm thy jetbot library: {e}", level="warn")
+            self._log(f"jetbot library not found: {e}", level="warn")
 
-        # (translated)
-        self._log("Khng tm thy phn cng → Chy  ch  MÔ PHỎNG (Mock).", level="warn")
+        # Attempt 3: Mock (simulation)
+        self._log("No hardware found -> Running in SIMULATION (Mock) mode.", level="warn")
         from unittest.mock import Mock
         self.car = Mock()
         self._mock = True
 
     # ============================================================
-    # (translated)
+    # Basic Movement API
     # ============================================================
 
     def forward(self, speed=None):
-        """(see module docstring)"""
+        """Drive straight forward at the given speed."""
         speed = speed or self.config["BASE_THROTTLE"]
         speed = self._clamp_throttle(speed)
         self._set_steering(0.0)
         self._set_throttle(speed)
 
     def stop(self):
-        """(see module docstring)"""
+        """Stop the vehicle immediately (zero throttle and center steering)."""
         self._set_throttle(0.0)
         self._set_steering(0.0)
 
     def steer(self, steering_value, speed=None):
         """
-        i vi gc li cho trc.
+        Drive with a given steering angle.
         
         Args:
-            steering_value: -1.0 (tri max) → 0.0 (thng) → +1.0 (phi max)
-            speed: tc , mc nh BASE_THROTTLE
+            steering_value: -1.0 (full left) -> 0.0 (straight) -> +1.0 (full right)
+            speed: throttle speed, defaults to BASE_THROTTLE
         """
         speed = speed or self.config["BASE_THROTTLE"]
         speed = self._clamp_throttle(speed)
@@ -145,48 +145,48 @@ class RacerController:
         self._set_throttle(speed)
 
     # ============================================================
-    # (translated)
+    # Arc Turning (Ackermann-style, cannot spin in place)
     # ============================================================
 
     def turn_angle(self, degrees, record_callback=None):
         """
-        R mt gc cho trc (i vng cung, KHÔNG quay ti ch).
+        Execute an arc turn of the given angle (cannot spin in place).
         
-        JetRacer khng th quay ti ch nh JetBot, nn phi:
-        1. nh li sang mt bn
-        2. i ti vi tc  chm
-        3. i  thi gian
-        4. Tr li thng + dng
+        Since JetRacer cannot spin in place like JetBot, the procedure is:
+        1. Set steering to one side
+        2. Drive forward at low speed
+        3. Wait for the calculated duration
+        4. Straighten steering and stop
 
         Args:
-            degrees: gc r (dng = phi, m = tri)
-            record_callback: hm ghi video debug (gi mi frame)
+            degrees: turn angle (positive = right, negative = left)
+            record_callback: optional function called each frame for debug recording
         """
         if degrees == 0:
             return
 
-        # (translated)
+        # Calculate duration proportional to angle
         duration = abs(degrees) / 90.0 * self.config["TURN_DURATION_90_DEG"]
         turn_steering = self.config["STEERING_VALUE_FOR_TURN"]
         turn_throttle = self.config["TURN_THROTTLE"]
 
-        # (translated)
+        # Set steering direction
         if degrees > 0:
-            self._set_steering(turn_steering)      # Li phi
+            self._set_steering(turn_steering)      # Steer right
         else:
-            self._set_steering(-turn_steering)     # Li tri
+            self._set_steering(-turn_steering)     # Steer left
 
-        # (translated)
+        # Apply throttle
         self._set_throttle(turn_throttle)
 
-        # (translated)
+        # Wait for turn to complete
         start_time = time.time()
         while time.time() - start_time < duration:
             if record_callback:
                 record_callback()
             time.sleep(0.05)  # 20 FPS
 
-        # (translated)
+        # Stop and pause briefly
         self.stop()
         time.sleep(0.3)
 
@@ -195,19 +195,19 @@ class RacerController:
 
     def correct_course_pid(self, error, image_width):
         """
-        PID Controller cho bm line.
+        PID Controller for lane following.
         
-        Thay th P-controller c bng PID y .
-        u ra l gi tr steering (-1.0 → +1.0) thay v chnh lch tc  motor.
+        Replaces the old P-controller with a full PID implementation.
+        Output is a steering value (-1.0 -> +1.0) instead of motor speed difference.
         
         Args:
-            error: sai lch pixel t tm nh (dng = lch phi)
-            image_width: chiu rng nh (pixels)
+            error: pixel offset from image center (positive = offset right)
+            image_width: image width (pixels)
         """
-        # (translated)
+        # Normalize error to [-1.0, 1.0]
         normalized_error = error / (image_width / 2.0)
 
-        # (translated)
+        # If within safe zone, drive straight
         if abs(normalized_error) < self.config["SAFE_ZONE_PERCENT"]:
             self.forward()
             return
@@ -221,7 +221,7 @@ class RacerController:
         # P - Proportional
         p_term = self.config["PID_KP"] * normalized_error
 
-        # (translated)
+        # I - Integral (with anti-windup clamping)
         self._pid_integral += normalized_error * dt
         self._pid_integral = max(-1.0, min(1.0, self._pid_integral))  # clamp
         i_term = self.config["PID_KI"] * self._pid_integral
@@ -230,19 +230,19 @@ class RacerController:
         d_error = (normalized_error - self._pid_last_error) / dt
         d_term = self.config["PID_KD"] * d_error
 
-        # (translated)
+        # Combine PID terms
         steering_output = p_term + i_term + d_term
         steering_output = self._clamp_steering(steering_output)
 
-        # (translated)
+        # Update PID state
         self._pid_last_error = normalized_error
         self._pid_last_time = current_time
 
-        # (translated)
+        # Apply steering command
         self.steer(steering_output, self.config["BASE_THROTTLE"])
 
     def reset_pid(self):
-        """(see module docstring)"""
+        """Reset PID controller internal state."""
         self._pid_integral = 0.0
         self._pid_last_error = 0.0
         self._pid_last_time = time.time()
@@ -252,13 +252,13 @@ class RacerController:
     # ============================================================
 
     def _set_throttle(self, value):
-        """(see module docstring)"""
+        """Set throttle via the appropriate hardware API."""
         value = self._clamp_throttle(value)
         if hasattr(self.car, 'throttle'):
             # NvidiaRacecar API
             self.car.throttle = value
         elif hasattr(self.car, 'set_motors'):
-            # (translated)
+            # JetBot fallback (differential drive)
             self.car.set_motors(value, value)
         elif hasattr(self.car, 'forward'):
             if value > 0:
@@ -279,17 +279,15 @@ class RacerController:
                     pass
 
     def _set_steering(self, value):
-        """(see module docstring)"""
+        """Set steering angle via the appropriate hardware API."""
         value = self._clamp_steering(value)
         value += self.config["STEERING_OFFSET"]
         if hasattr(self.car, 'steering'):
             # NvidiaRacecar API
             self.car.steering = value
         elif hasattr(self.car, 'set_motors') and not self._mock:
-            # (translated)
-            # (translated)
-            # (translated)
-            pass  # Steering s c x l trong _set_throttle
+            # JetBot does not have separate steering; handled in _set_throttle
+            pass
 
         if self._mock and HAS_ROS:
             self.current_steering = value
@@ -320,7 +318,7 @@ class RacerController:
 
 
 # ============================================================
-# (translated)
+# Standalone Test
 # ============================================================
 if __name__ == "__main__":
     print("=== Test RacerController ===")
