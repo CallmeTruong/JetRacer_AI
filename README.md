@@ -357,6 +357,15 @@ JetRacer_AI/
 
 ---
 
+## 📚 References & Criterion Papers
+
+This project is inspired by and builds upon the concepts presented in the following research papers:
+
+- 📄 **[Accelerating the Response of Self-Driving Control by Using Rapid Object Detection and Steering Angle Prediction](https://www.mdpi.com/2079-9292/12/10/2161)** (MDPI Electronics, 2023)<br>By *Bao-Rong Chang, Hsiu-Fen Tsai, and Chia-Wei Hsieh*. Focuses on enhancing vision-based autonomous driving systems by integrating rapid object detection with steering angle prediction to improve responsiveness.
+- 📄 **[End to End Learning for Self-Driving Cars](https://arxiv.org/abs/1604.07316)** (NVIDIA, 2016)<br>By *Mariusz Bojarski et al.* The landmark paper establishing the foundation of mapping raw camera pixels directly to steering commands using Convolutional Neural Networks.
+
+---
+
 ## 👥 Collaborators & Co-Authors
 
 - **CallmeTruong**: [github.com/CallmeTruong](https://github.com/CallmeTruong)
